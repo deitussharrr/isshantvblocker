@@ -16,8 +16,9 @@ const MAX_INIT_ATTEMPTS = 10;
 
 // ========================
 // LAYER 1: PRE-BLOCK AT document_start
-// Immediately hide the entire page if this is a channel page URL.
-// This prevents ANY content from rendering before the engine checks.
+// Immediately hide the entire page AND kill any media if this is a shorts page.
+// CSS visibility:hidden does NOT stop audio — we need to physically destroy
+// video/audio elements and prevent YouTube from creating them.
 // ========================
 
 const CURRENT_PATHNAME = window.location.pathname;
@@ -26,6 +27,24 @@ const IS_CHANNEL_PAGE = !!CURRENT_PATHNAME.match(/^\/channel\/(UC[\w-]{22})/) ||
                          !!CURRENT_PATHNAME.match(/^\/@[\w.-]+/);
 const IS_SHORTS_PAGE = CURRENT_PATHNAME.includes('/shorts/');
 const PRE_BLOCK_STYLE_ID = 'isshantv-pre-block-css';
+
+/**
+ * Force-kill a media element — pause, mute, remove src, remove from DOM.
+ */
+function killMediaElement(media: HTMLMediaElement): void {
+  try {
+    media.pause();
+    media.muted = true;
+    media.volume = 0;
+    media.currentTime = 999999;
+    media.dispatchEvent(new Event('ended'));
+    media.removeAttribute('src');
+    media.removeAttribute('srcObject');
+    (media as any).srcObject = null;
+    media.load();
+    media.remove();
+  } catch {}
+}
 
 /**
  * Inject CSS to hide all page content immediately.
@@ -54,9 +73,69 @@ function removePreBlockCSS(): void {
   if (style) style.remove();
 }
 
-// IMMEDIATELY: if this URL is a channel page or shorts page, hide everything BEFORE any YouTube JS renders
-if (IS_CHANNEL_PAGE || IS_SHORTS_PAGE) {
+// ========================
+// LAYER 1b: PRE-BLOCK CSS FOR CHANNEL PAGES
+// ========================
+
+if (IS_CHANNEL_PAGE) {
   injectPreBlockCSS();
+}
+
+// ========================
+// LAYER 1c: SHORTS MEDIA KILLER (document_start)
+// At document_start, before any YouTube JS runs, set up a MutationObserver
+// that immediately destroys ANY video/audio element YouTube creates.
+// Also prevent play events via capture-phase listener.
+// CSS visibility:hidden does NOT stop audio — we need physical destruction.
+// ========================
+
+if (IS_SHORTS_PAGE) {
+  injectPreBlockCSS();
+  
+  // MutationObserver: kill any video/audio elements YouTube creates
+  const mediaKiller = new MutationObserver(() => {
+    const media = document.querySelectorAll<HTMLMediaElement>('video, audio');
+    media.forEach(killMediaElement);
+  });
+  try {
+    mediaKiller.observe(document.documentElement, { childList: true, subtree: true });
+  } catch {}
+  
+  // Capture-phase play prevention — fires BEFORE YouTube's play event
+  document.addEventListener('play', (e) => {
+    e.stopPropagation();
+    const target = e.target as HTMLMediaElement;
+    if (target) killMediaElement(target);
+  }, true);
+  
+  // Also prevent loadedmetadata — YouTube uses this to start buffering
+  document.addEventListener('loadedmetadata', (e) => {
+    const target = e.target as HTMLMediaElement;
+    if (target && target.tagName === 'VIDEO') killMediaElement(target);
+  }, true);
+  
+  // Immediately ask background if shorts are blocked (no delay, no DOM needed)
+  // We can't wait 500ms for initialize() — YouTube starts audio almost instantly
+  chrome.runtime.sendMessage(
+    { type: 'GET_SETTINGS' },
+    (response: any) => {
+      if (chrome.runtime.lastError) return;
+      if (response?.success && response.data?.general?.blockShorts) {
+        window.location.href = 'https://www.youtube.com';
+      }
+    }
+  );
+  
+  // Backup redirect timer — in case GET_SETTINGS message fails
+  let redirectTries = 0;
+  const redirectTimer = setInterval(() => {
+    if (++redirectTries > 50 || !window.location.pathname.includes('/shorts/')) {
+      clearInterval(redirectTimer);
+      return;
+    }
+    // Kill any media that may have been created
+    document.querySelectorAll<HTMLMediaElement>('video, audio').forEach(killMediaElement);
+  }, 100);
 }
 
 /**

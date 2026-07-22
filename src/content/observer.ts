@@ -79,10 +79,40 @@ export function stopObserving(): void {
 
 /**
  * Handle navigation events (SPA)
+ * 
+ * CRITICAL: For shorts pages, we MUST redirect IMMEDIATELY with ZERO delay.
+ * YouTube's SPA starts playing shorts audio within milliseconds of navigation.
+ * Waiting even 200ms means the audio already plays.
+ * 
+ * For regular watch pages, we can wait for YouTube to render the DOM first.
  */
 function handleNavigation(event?: Event): void {
   if (debounceTimer) {
     clearTimeout(debounceTimer);
+  }
+
+  // ========================
+  // IMMEDIATE SHORTS CHECK (NO DELAY)
+  // If navigating to a shorts page, redirect now before YouTube starts playing.
+  // The redirect is handled by checking with the background service worker.
+  // ========================
+  if (window.location.pathname.includes('/shorts/')) {
+    // Kill any media that might have been created during the navigation
+    document.querySelectorAll<HTMLMediaElement>('video, audio').forEach(m => {
+      try { m.pause(); m.muted = true; m.removeAttribute('src'); m.load(); m.remove(); } catch {}
+    });
+    
+    // Ask background if shorts are blocked (fast async call)
+    chrome.runtime.sendMessage(
+      { type: 'GET_SETTINGS' },
+      (response: any) => {
+        if (chrome.runtime.lastError) return;
+        if (response?.success && response.data?.general?.blockShorts) {
+          window.location.href = 'https://www.youtube.com';
+        }
+      }
+    );
+    return;
   }
 
   // CRITICAL: Do NOT check the watch page immediately after navigation.
