@@ -1,0 +1,11 @@
+{
+  "name": "isshantv-guardian-server",
+  "version": "1.0.0",
+  "description": "IsshanTV Guardian - Remote Control HTTP Server",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "install-host": "node install-host.js"
+  }
+}

@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IsshanTV Guardian - Remote Control</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+</head>
+<body>
+  <div id="app">
+    <!-- Login Screen -->
+    <div id="login-screen" class="screen hidden">
+      <div class="login-card">
+        <div class="login-icon">🛡️</div>
+        <h1>IsshanTV Guardian</h1>
+        <p class="login-subtitle">Remote Control Panel</p>
+        <div id="login-password-form">
+          <input type="password" id="login-password" class="input" placeholder="Enter password" autocomplete="off">
+          <button id="login-btn" class="btn btn-primary">Unlock</button>
+        </div>
+        <div id="login-create-form" class="hidden">
+          <p class="mb-1">Create a password to secure remote access:</p>
+          <input type="password" id="create-password" class="input" placeholder="New password">
+          <input type="password" id="create-password-confirm" class="input" placeholder="Confirm password">
+          <button id="create-password-btn" class="btn btn-primary">Create Password</button>
+        </div>
+        <div id="login-error" class="error hidden"></div>
+      </div>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div id="dashboard" class="screen hidden">
+      <!-- Header -->
+      <header class="header">
+        <div class="header-left">
+          <div class="header-logo">🛡️ <span>IsshanTV Guardian</span></div>
+          <span class="header-subtitle">Remote Control</span>
+        </div>
+        <div class="header-right">
+          <div id="connection-status" class="connection-badge connected">Connected</div>
+          <span id="unlock-timer" class="unlock-timer hidden"></span>
+          <button id="lock-btn" class="btn btn-sm btn-outline" title="Lock remote access">🔒 Lock</button>
+        </div>
+      </header>
+
+      <!-- Tabs -->
+      <nav class="tabs">
+        <button class="tab active" data-tab="dashboard-tab">📊 Dashboard</button>
+        <button class="tab" data-tab="media-tab">🎬 Media</button>
+        <button class="tab" data-tab="settings-tab">⚙️ Settings</button>
+        <button class="tab" data-tab="blocklist-tab">🚫 Blocklists</button>
+        <button class="tab" data-tab="logs-tab">📝 Logs</button>
+      </nav>
+
+      <!-- Dashboard Tab -->
+      <div id="dashboard-tab" class="tab-content active">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value" id="stat-channels">—</div>
+            <div class="stat-label">Channels Blocked</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-keywords">—</div>
+            <div class="stat-label">Keywords Blocked</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-blocked-today">—</div>
+            <div class="stat-label">Blocked Today</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-regex">—</div>
+            <div class="stat-label">Regex Rules</div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>Quick Actions</h2>
+          <div class="quick-actions">
+            <button class="action-card" onclick="navigateTab('settings-tab')">
+              <span class="action-icon">⚙️</span>
+              <span>Change Settings</span>
+            </button>
+            <button class="action-card" onclick="navigateTab('blocklist-tab')">
+              <span class="action-icon">🚫</span>
+              <span>Manage Blocklists</span>
+            </button>
+            <button class="action-card" onclick="navigateTab('logs-tab')">
+              <span class="action-icon">📝</span>
+              <span>View Logs</span>
+            </button>
+            <button class="action-card" onclick="exportData()">
+              <span class="action-icon">📦</span>
+              <span>Export All Data</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>Server Info</h2>
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="info-label">Status</span>
+              <span class="info-value" id="server-status">Running</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Extension</span>
+              <span class="info-value" id="extension-status">Connected</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Uptime</span>
+              <span class="info-value" id="server-uptime">—</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Version</span>
+              <span class="info-value">1.0.0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Media Tab -->
+      <div id="media-tab" class="tab-content">
+        <div class="section">
+          <h2>🎬 Media Control</h2>
+          <p class="text-muted">Control YouTube playback on connected devices.</p>
+          
+          <div class="media-status-card">
+            <div class="media-status-header">
+              <span>Currently Playing</span>
+              <span id="media-playing-status" class="badge badge-idle">Idle</span>
+            </div>
+            <div id="media-no-video" class="media-empty">
+              <div class="media-empty-icon">📺</div>
+              <p>No video is currently playing on YouTube.</p>
+              <p class="text-muted">Open a YouTube tab to see controls here.</p>
+            </div>
+            <div id="media-video-info" class="media-video-info hidden">
+              <div class="media-thumbnail" id="media-thumbnail">
+                <div class="media-thumb-placeholder">🎬</div>
+              </div>
+              <div class="media-details">
+                <div class="media-title" id="media-title">—</div>
+                <div class="media-channel" id="media-channel">—</div>
+                <div class="media-meta">
+                  <span id="media-video-id">—</span>
+                  <span id="media-blocked-status" class="badge">Checking...</span>
+                </div>
+              </div>
+            </div>
+            <div class="media-controls">
+              <button id="media-refresh-btn" class="btn btn-outline btn-icon" title="Refresh status">🔄</button>
+              <button id="media-pause-btn" class="btn btn-outline btn-icon" title="Pause video">⏸️</button>
+              <button id="media-resume-btn" class="btn btn-outline btn-icon" title="Play video">▶️</button>
+              <button id="media-block-btn" class="btn btn-danger btn-icon" title="Block this video">🚫</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings Tab -->
+      <div id="settings-tab" class="tab-content">
+        <div class="section">
+          <div class="section-header">
+            <h2>⚙️ General Settings</h2>
+            <button id="settings-save-btn" class="btn btn-primary btn-sm hidden">Save Changes</button>
+          </div>
+          
+          <div class="settings-group">
+            <h3>General</h3>
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="setting-label">Extension Enabled</div>
+                <div class="setting-desc">Enable or disable all filtering</div>
+              </div>
+              <label class="toggle">
+                <input type="checkbox" id="setting-enabled" data-key="general.enabled">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="setting-label">Blocking Action</div>
+                <div class="setting-desc">How to hide blocked content</div>
+              </div>
+              <select id="setting-blocking-action" class="select" data-key="general.blockingAction">
+                <option value="hide">Hide</option>
+                <option value="blur">Blur</option>
+                <option value="replace">Replace with Warning</option>
+                <option value="warning">Warning Screen</option>
+              </select>
+            </div>
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="setting-label">Show Warning</div>
+                <div class="setting-desc">Display a warning when content is blocked</div>
+              </div>
+              <label class="toggle">
+                <input type="checkbox" id="setting-show-warning" data-key="general.showWarning">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="setting-label">Block Shorts</div>
+                <div class="setting-desc">Remove YouTube Shorts completely</div>
+              </div>
+              <label class="toggle">
+                <input type="checkbox" id="setting-block-shorts" data-key="general.blockShorts">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="setting-label">Enable Logging</div>
+                <div class="setting-desc">Record blocked content for review</div>
+              </div>
+              <label class="toggle">
+                <input type="checkbox" id="setting-enable-logging" data-key="general.enableLogging">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="settings-group" style="border: 2px solid #ef4444; border-radius: 12px; padding: 16px;">
+            <h3 style="color: #ef4444;">🌐 Network Blocking</h3>
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="setting-label" style="color: #ef4444; font-weight: 700;">Block All Network Traffic</div>
+                <div class="setting-desc">When enabled, ALL internet traffic is blocked except the web server (192.168.1.15). YouTube, Google, and all websites will be inaccessible.<br><strong style="color: #ef4444;">⚠️ This can only be toggled from this dashboard or the extension popup.</strong></div>
+              </div>
+              <label class="toggle">
+                <input type="checkbox" id="setting-network-block">
+                <span class="toggle-slider" style="background: #ef4444;"></span>
+              </label>
+            </div>
+            <div id="network-block-status" class="text-muted" style="margin-top: 8px; font-size: 12px;">Checking status...</div>
+          </div>
+
+          <div class="settings-group">
+            <h3>Categories</h3>
+            <div id="categories-container">
+              <p class="text-muted">Loading categories...</p>
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <h3>Password</h3>
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="setting-label">Change Password</div>
+                <div class="setting-desc">Update the remote access password</div>
+              </div>
+              <button id="change-password-btn" class="btn btn-outline btn-sm">Change</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Blocklist Tab -->
+      <div id="blocklist-tab" class="tab-content">
+        <div class="section">
+          <div class="section-header">
+            <h2>🚫 Blocklist Manager</h2>
+            <div class="blocklist-actions">
+              <button id="import-btn" class="btn btn-outline btn-sm">📥 Import</button>
+              <button id="export-blocklist-btn" class="btn btn-outline btn-sm">📤 Export</button>
+            </div>
+          </div>
+
+          <div class="blocklist-tabs">
+            <button class="bl-tab active" data-list="channels">Channels</button>
+            <button class="bl-tab" data-list="keywords">Keywords</button>
+            <button class="bl-tab" data-list="regex">Regex</button>
+            <button class="bl-tab" data-list="allowlist">Allowlist</button>
+          </div>
+
+          <!-- Hidden file input for import -->
+          <input type="file" id="import-file-input" class="hidden" accept=".json,.csv,.txt">
+
+          <div class="blocklist-search">
+            <input type="text" id="blocklist-search" class="input" placeholder="Search blocklist...">
+            <button id="blocklist-add-btn" class="btn btn-primary btn-sm">+ Add</button>
+          </div>
+
+          <div id="blocklist-items" class="blocklist-items">
+            <div class="loading">Loading...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Logs Tab -->
+      <div id="logs-tab" class="tab-content">
+        <div class="section">
+          <div class="section-header">
+            <h2>📝 Blocking Logs</h2>
+            <div class="blocklist-actions">
+              <button id="logs-refresh-btn" class="btn btn-outline btn-sm">🔄 Refresh</button>
+              <button id="logs-clear-btn" class="btn btn-danger btn-sm">🗑️ Clear</button>
+            </div>
+          </div>
+          <div id="logs-container">
+            <div class="loading">Loading logs...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="modal-overlay" class="modal-overlay hidden" onclick="closeModal()">
+      <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-header">
+          <h3 id="modal-title">Modal</h3>
+          <button class="modal-close" onclick="closeModal()">✕</button>
+        </div>
+        <div class="modal-body" id="modal-body"></div>
+        <div class="modal-footer" id="modal-footer"></div>
+      </div>
+    </div>
+
+    <!-- Toast notification -->
+    <div id="toast" class="toast hidden"></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

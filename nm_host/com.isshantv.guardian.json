@@ -1,0 +1,7 @@
+{
+  "name": "com.isshantv.guardian",
+  "description": "IsshanTV Guardian - Remote Control Server",
+  "path": "start-host.cmd",
+  "type": "stdio",
+  "allowed_origins": ["chrome-extension://YOUR_EXTENSION_ID_HERE"]
+}
