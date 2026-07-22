@@ -162,11 +162,20 @@ export function blockVideoPlayer(player: HTMLElement, result: FilterResult): voi
   player.setAttribute(BLOCKED_DATA_ATTR, 'true');
 
   // ========================
-  // LAYER 0: For shorts pages, redirect immediately
-  // Shorts auto-advance feeds make overlays unreliable - audio always starts
+  // LAYER 0: REDIRECT — the ONLY reliable way to stop ALL audio
+  // YouTube uses Web Audio API (AudioContext), MSE audio tracks, and
+  // re-creates the player faster than any DOM-based kill timer can catch.
+  // Overlays + media killing is NOT enough — audio will keep playing.
+  // Redirecting away guarantees ZERO audio from blocked content.
   // ========================
-  if (window.location.pathname.includes('/shorts/')) {
-    console.log('IsshanTV Guardian: Redirecting from shorts page');
+  if (window.location.pathname.includes('/watch') || window.location.pathname.includes('/shorts/')) {
+    console.log('IsshanTV Guardian: Redirecting from blocked video page to stop audio');
+    
+    // Kill all media one last time before navigating away
+    document.querySelectorAll<HTMLMediaElement>('video, audio').forEach(m => {
+      try { m.pause(); m.muted = true; m.removeAttribute('src'); (m as any).srcObject = null; m.load(); m.remove(); } catch {}
+    });
+    
     window.location.href = 'https://www.youtube.com';
     return;
   }

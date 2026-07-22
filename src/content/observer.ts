@@ -94,7 +94,6 @@ function handleNavigation(event?: Event): void {
   // ========================
   // IMMEDIATE SHORTS CHECK (NO DELAY)
   // If navigating to a shorts page, redirect now before YouTube starts playing.
-  // The redirect is handled by checking with the background service worker.
   // ========================
   if (window.location.pathname.includes('/shorts/')) {
     // Kill any media that might have been created during the navigation
@@ -113,6 +112,31 @@ function handleNavigation(event?: Event): void {
       }
     );
     return;
+  }
+  
+  // ========================
+  // IMMEDIATE WATCH PAGE CHECK (NO DELAY)
+  // Check if the video ID is in the blocklist before YouTube starts playing.
+  // ========================
+  if (window.location.pathname.includes('/watch')) {
+    const videoId = new URLSearchParams(window.location.search).get('v');
+    if (videoId) {
+      // Kill any existing media
+      document.querySelectorAll<HTMLMediaElement>('video, audio').forEach(m => {
+        try { m.pause(); m.muted = true; m.removeAttribute('src'); m.load(); m.remove(); } catch {}
+      });
+      
+      // Ask background to check this video against the cached blocklist
+      chrome.runtime.sendMessage(
+        { type: 'CHECK_PAGE', payload: { url: window.location.href } },
+        (response: any) => {
+          if (chrome.runtime.lastError) return;
+          if (response?.success && response.data?.blocked) {
+            window.location.href = 'https://www.youtube.com';
+          }
+        }
+      );
+    }
   }
 
   // CRITICAL: Do NOT check the watch page immediately after navigation.
