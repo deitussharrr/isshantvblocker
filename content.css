@@ -1,0 +1,71 @@
+/* ========================
+   IsshanTV Guardian - Content Script Styles
+   Injected into YouTube pages
+   ======================== */
+
+/* Remove shorts tab from sidebar */
+ytd-guide-entry-renderer:has(a[title="Shorts"]),
+ytd-mini-guide-entry-renderer:has(a[title="Shorts"]) {
+  display: none !important;
+}
+
+/* Remove shorts shelf from homepage */
+ytd-reel-shelf-renderer {
+  display: none !important;
+}
+
+/* Remove shorts from search results */
+ytd-video-renderer:has(a[href*="/shorts/"]),
+ytd-grid-video-renderer:has(a[href*="/shorts/"]) {
+  display: none !important;
+}
+
+/* Blocked content - hidden */
+.isshantv-blocked {
+  display: none !important;
+}
+
+/* Blocked content - blurred */
+.isshantv-blurred {
+  filter: blur(20px) !important;
+  pointer-events: none !important;
+  user-select: none !important;
+  transition: filter 0.3s ease;
+}
+
+/* Warning screen animation */
+.isshantv-guardian-warning {
+  animation: isshantvFadeIn 0.3s ease forwards;
+}
+
+@keyframes isshantvFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Remove end cards */
+.ytp-ce-element {
+  display: none !important;
+}
+
+/* Remove autoplay overlay */
+.ytp-autonav-endscreen-countdown-container {
+  display: none !important;
+}
+
+/* Remove shorts from channel pages */
+ytd-grid-video-renderer:has([is-shorts]) {
+  display: none !important;
+}
+
+/* Remove infinite shorts feed */
+ytd-shorts {
+  display: none !important;
+}
+
