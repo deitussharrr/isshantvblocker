@@ -1,0 +1,10 @@
+[
+  {
+    "id": "allow-001",
+    "type": "channel",
+    "value": "",
+    "label": "Example: Add approved channel ID here",
+    "reason": "Approved educational content",
+    "enabled": true
+  }
+]
