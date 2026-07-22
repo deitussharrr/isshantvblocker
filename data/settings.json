@@ -1,0 +1,98 @@
+{
+  "general": {
+    "enabled": true,
+    "blockingAction": "hide",
+    "showWarning": true,
+    "blockShorts": true,
+    "blockLiveStreams": false,
+    "blockPlaylists": false,
+    "enableLogging": false,
+    "logRetentionDays": 30,
+    "blockAllTraffic": false
+  },
+  "password": {
+    "hash": "",
+    "salt": "",
+    "created": false
+  },
+  "categories": {
+    "nursery": {
+      "enabled": true,
+      "action": "hide"
+    },
+    "educational": {
+      "enabled": false,
+      "action": "hide"
+    },
+    "kids": {
+      "enabled": true,
+      "action": "hide"
+    },
+    "cartoons": {
+      "enabled": false,
+      "action": "hide"
+    },
+    "toyReviews": {
+      "enabled": true,
+      "action": "hide"
+    },
+    "brainrot": {
+      "enabled": true,
+      "action": "hide"
+    },
+    "italianBrainrot": {
+      "enabled": true,
+      "action": "hide"
+    },
+    "gaming": {
+      "enabled": false,
+      "action": "hide"
+    },
+    "music": {
+      "enabled": false,
+      "action": "hide"
+    },
+    "shorts": {
+      "enabled": true,
+      "action": "hide"
+    },
+    "familyVlogs": {
+      "enabled": true,
+      "action": "hide"
+    },
+    "clickbait": {
+      "enabled": true,
+      "action": "hide"
+    },
+    "memeCulture": {
+      "enabled": true,
+      "action": "hide"
+    },
+    "aiKidsContent": {
+      "enabled": true,
+      "action": "hide"
+    },
+    "pretendPlay": {
+      "enabled": true,
+      "action": "hide"
+    },
+    "slime": {
+      "enabled": true,
+      "action": "hide"
+    },
+    "surpriseEggs": {
+      "enabled": true,
+      "action": "hide"
+    }
+  },
+  "temporaryUnlock": {
+    "active": false,
+    "expiresAt": 0
+  },
+  "ui": {
+    "theme": "dark",
+    "compactMode": false,
+    "showStats": true
+  },
+  "version": 1
+}
